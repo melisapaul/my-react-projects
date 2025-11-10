@@ -1,11 +1,26 @@
 
 import './App.css';
 import React, { useState } from 'react';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Register from './components/Register';
 import Login from './components/Login';
+import Dashboard from './components/Dashboard';
 
-function App() {
+function AuthenticatedApp() {
+  const { user, loading } = useAuth();
   const [view, setView] = useState('login');
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-900 via-indigo-900 to-sky-800">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  if (user) {
+    return <Dashboard />;
+  }
 
   return (
     <>
@@ -19,6 +34,14 @@ function App() {
 
       {view === 'login' ? <Login onSwitch={() => setView('register')} /> : <Register />}
     </>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AuthenticatedApp />
+    </AuthProvider>
   );
 }
 

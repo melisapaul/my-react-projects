@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 
 const Register = () => {
   const [user, setUser] = useState({ username: "", email: "", number: "", password: "" });
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+  const { register } = useAuth();
 
   const handleInput = (e) => {
     const { name, value } = e.target;
     const next = { ...user, [name]: value };
     setUser(next);
-    // autosave draft
+    
+    // autosave draft (exclude password for security)
     try {
-      localStorage.setItem("register_draft", JSON.stringify(next));
+      const { password, ...draft } = next;
+      localStorage.setItem("register_draft", JSON.stringify(draft));
     } catch {
       // ignore storage errors
     }
@@ -19,34 +24,33 @@ const Register = () => {
   useEffect(() => {
     try {
       const draft = localStorage.getItem("register_draft");
-      if (draft) setUser(JSON.parse(draft));
+      if (draft) {
+        setUser(prev => ({ ...prev, ...JSON.parse(draft) }));
+      }
     } catch {
-      // ignore
+      // ignore parsing errors
     }
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("registering:", user);
+    setError("");
+    
     try {
-      // append to users array in localStorage
-      const raw = localStorage.getItem("users") || "[]";
-      const users = JSON.parse(raw);
-      users.push(user);
-      localStorage.setItem("users", JSON.stringify(users));
+      await register(user);
+      setSubmitted(true);
       localStorage.removeItem("register_draft");
+      setTimeout(() => setSubmitted(false), 1600);
     } catch (err) {
-      console.error("localStorage error:", err);
+      setError(err.message);
     }
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 1600);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-900 to-sky-800 p-6">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-900 via-indigo-900 to-sky-800 p-6">
       <div className="max-w-md w-full bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl shadow-2xl p-8">
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-rose-400 to-yellow-300 flex items-center justify-center text-white font-bold text-xl shadow-md">
+          <div className="w-14 h-14 rounded-full bg-linear-to-tr from-rose-400 to-yellow-300 flex items-center justify-center text-white font-bold text-xl shadow-md">
             R
           </div>
           <div>
@@ -55,10 +59,17 @@ const Register = () => {
           </div>
         </div>
 
+        {error && (
+          <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-200 text-sm">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             aria-label="Full name"
             name="username"
+            value={user.username}
             onChange={handleInput}
             required
             placeholder="Full name"
@@ -68,6 +79,7 @@ const Register = () => {
             aria-label="Email"
             name="email"
             type="email"
+            value={user.email}
             onChange={handleInput}
             required
             placeholder="Email address"
@@ -77,6 +89,7 @@ const Register = () => {
             aria-label="Phone"
             name="number"
             type="tel"
+            value={user.number}
             onChange={handleInput}
             placeholder="Phone (optional)"
             className="w-full p-3 rounded-lg bg-white/90 placeholder:text-slate-500 focus:outline-none ring-1 ring-white/20"
@@ -85,6 +98,7 @@ const Register = () => {
             aria-label="Password"
             name="password"
             type="password"
+            value={user.password}
             onChange={handleInput}
             required
             placeholder="Create password"
@@ -93,7 +107,8 @@ const Register = () => {
 
           <button
             type="submit"
-            className="w-full py-3 rounded-lg bg-gradient-to-r from-rose-500 to-orange-400 text-white font-semibold shadow hover:opacity-95 transition-opacity"
+            disabled={submitted}
+            className="w-full py-3 rounded-lg bg-linear-to-r from-rose-500 to-orange-400 text-white font-semibold shadow hover:opacity-95 transition-opacity disabled:opacity-50"
           >
             {submitted ? "Registered ✓" : "Create account"}
           </button>
