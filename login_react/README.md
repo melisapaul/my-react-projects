@@ -2,6 +2,11 @@
 
 A modern React application with user authentication, featuring attractive UI and localStorage persistence.
 
+## Recent changes
+
+- 2025-11-19: Added basic authentication with localStorage persistence (register/login/dashboard), improved UI and draft autosave.
+
+
 ## Features
 
 - ✅ **Attractive UI Design**: Modern glassmorphism design with gradient backgrounds
